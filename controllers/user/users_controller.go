@@ -3,6 +3,7 @@ package user
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"users_api/domain/users"
 	"users_api/services"
 
@@ -12,9 +13,20 @@ import (
 )
 
 func GetUser(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{
-		"status": "Not Ready",
-	})
+	userId, err := strconv.ParseInt(c.Param("user_id"), 10, 64)
+
+	if err != nil {
+		resErr := resError.NewBadRequestError("user id should be a number")
+		c.JSON(resErr.Status, resErr)
+	}
+
+	user, getErr := services.GetUser(userId)
+	if getErr != nil {
+		c.JSON(getErr.Status, getErr)
+		return 
+	}
+
+	c.JSON(http.StatusOK, user)
 }
 
 func CreateUser(c *gin.Context) {
@@ -42,6 +54,7 @@ func CreateUser(c *gin.Context) {
 }
 
 func SearchUser(c *gin.Context) {
+
 	c.JSON(http.StatusNotImplemented, gin.H{
 		"status": "Not Ready",
 	})
