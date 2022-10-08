@@ -1,7 +1,6 @@
 package user
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"users_api/domain/users"
@@ -40,8 +39,6 @@ func CreateUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, resErr)
 		return
 	}
-
-	fmt.Println(user)
 
 	result, err := services.CreateUser(user)
 	if err != nil {
