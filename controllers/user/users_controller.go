@@ -17,6 +17,7 @@ func GetUser(c *gin.Context) {
 	if err != nil {
 		resErr := resError.NewBadRequestError("user id should be a number")
 		c.JSON(resErr.Status, resErr)
+		return
 	}
 
 	user, getErr := services.GetUser(userId)
@@ -55,4 +56,38 @@ func SearchUser(c *gin.Context) {
 	c.JSON(http.StatusNotImplemented, gin.H{
 		"status": "Not Ready",
 	})
+}
+
+func UpdateUser(c *gin.Context) {
+	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
+
+	if userErr != nil {
+		resErr := resError.NewBadRequestError("user id should be a number")
+		c.JSON(resErr.Status, resErr)
+		return
+	}
+
+	var user users.User
+
+	//This function is same as we Readall and unmarshall the request
+	if err := c.ShouldBindJSON(&user); err != nil {
+		//TODO: handle json error
+		var resErr resError.RestError
+		resErr = *resError.NewBadRequestError("invalid json body")
+		c.JSON(http.StatusBadRequest, resErr)
+		return
+	}
+
+	user.Id = userId
+
+	isPartial := c.Request.Method== http.MethodPatch
+
+	result, err := services.UpdateUser(isPartial,user)
+
+	if err != nil {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
 }

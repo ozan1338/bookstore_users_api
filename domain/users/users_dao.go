@@ -1,11 +1,12 @@
 package users
 
 import (
-	"fmt"
-	"strings"
 	"users_api/datasource/myql/user_db"
 	date_utils "users_api/utils/date_utils"
 	resError "users_api/utils/errors"
+	mysqlErr "users_api/utils/mysql_utils"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
@@ -13,6 +14,7 @@ const (
 	errNoRows = "no rows in result set"
 	queryInsertUser ="INSERT INTO user(first_name, last_name, email, date_created) VALUE(?,?,?,?);"
 	queryGetUser = "select id, first_name, last_name, email, date_created from user where id=?"
+	queryUpdateUser = "update user set first_name=?, last_name=?, email=? where id=?"
 )
 
 var (
@@ -28,12 +30,9 @@ func(user *User) Save() *resError.RestError {
 
 	user.DateCreated = date_utils.GetNowString()
 
-	insertResult, err := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated)
-	if err != nil {
-		if strings.Contains(err.Error(), indexUniqueEmail) {
-			return resError.NewBadRequestError("email already exist")
-		}
-		return resError.NewInternalServerError(err.Error())
+	insertResult, saveErr := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated)
+	if saveErr != nil {
+		return mysqlErr.ParseErr(saveErr)
 	}
 
 	userId, err := insertResult.LastInsertId()
@@ -54,12 +53,23 @@ func(user *User) Get() *resError.RestError {
 	defer stmt.Close()
 
 	result := stmt.QueryRow(user.Id)
-	if err := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated); err != nil {
-		if strings.Contains(err.Error(), errNoRows) {
-			return resError.NewNotFoundError(fmt.Sprintf("user %d not found",user.Id))
-		}
-		fmt.Println(err)
-		return resError.NewInternalServerError(fmt.Sprintf("error when try to get user %d: %s ", user.Id, err.Error()))
+	if getErr := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated); getErr != nil {
+		return mysqlErr.ParseErr(getErr)
+	}
+
+	return nil
+}
+
+func(user *User) Update() *resError.RestError {
+	stmt, err := user_db.Client.Prepare(queryUpdateUser)
+	if err != nil {
+		return resError.NewInternalServerError(err.Error())
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(user.FirstName, user.LastName, user.Email, user.Id)
+	if err != nil {
+		return mysqlErr.ParseErr(err)
 	}
 
 	return nil
