@@ -30,9 +30,6 @@ func init() {
 	// dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8",
 	// 	username,password,host,schema,
 	// )
-	log.Println(username)
-	log.Println(password)
-	log.Println(host)
 	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8",
 		username,password,"localhost",schema,
 	)
