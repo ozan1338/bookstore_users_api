@@ -2,6 +2,8 @@ package services
 
 import (
 	"users_api/domain/users"
+	crypto_utils "users_api/utils/crypto_utils"
+	"users_api/utils/date_utils"
 	resError "users_api/utils/errors"
 )
 
@@ -9,6 +11,10 @@ func CreateUser(user users.User) (*users.User, *resError.RestError) {
 	if err := user.Validate(); err != nil {
 		return nil,err
 	}
+
+	user.Status = users.StatusActive
+	user.DateCreated = date_utils.GetNowDBFormat()
+	user.Password = crypto_utils.GetMd5(user.Password)
 
 	if err := user.Save(); err != nil {
 		return nil, err
@@ -65,4 +71,14 @@ func UpdateUser(isPartial bool,user users.User) (*users.User, *resError.RestErro
 func DeleteUser(userId int64) *resError.RestError {
 	user := &users.User{Id: userId}
 	return user.Delete()
+}
+
+func Search(status string) (users.Users,*resError.RestError) {
+	dao := &users.User{}
+	users,err := dao.FindByStatus(status)
+	if err != nil {
+		return nil,err
+	}
+
+	return users,nil
 }
