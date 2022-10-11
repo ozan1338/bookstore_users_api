@@ -7,7 +7,21 @@ import (
 	resError "users_api/utils/errors"
 )
 
-func CreateUser(user users.User) (*users.User, *resError.RestError) {
+type userService struct{}
+
+var (
+	UserService userServiceInterface = &userService{}
+)
+
+type userServiceInterface interface {
+	CreateUser( users.User) (*users.User, *resError.RestError)
+	GetUser( int64) (*users.User, *resError.RestError)
+	UpdateUser( bool, users.User) (*users.User, *resError.RestError)
+	DeleteUser( int64) *resError.RestError
+	Search( string) (users.Users,*resError.RestError)
+}
+
+func(s *userService) CreateUser(user users.User) (*users.User, *resError.RestError) {
 	if err := user.Validate(); err != nil {
 		return nil,err
 	}
@@ -23,7 +37,7 @@ func CreateUser(user users.User) (*users.User, *resError.RestError) {
 	return &user,nil
 }
 
-func GetUser(userId int64) (*users.User, *resError.RestError) {
+func(s *userService) GetUser(userId int64) (*users.User, *resError.RestError) {
 	result := &users.User{Id: userId}
 	if err := result.Get(); err != nil {
 		return nil, err
@@ -31,8 +45,8 @@ func GetUser(userId int64) (*users.User, *resError.RestError) {
 	return result, nil
 }
 
-func UpdateUser(isPartial bool,user users.User) (*users.User, *resError.RestError) {
-	current, err := GetUser(user.Id)
+func(s *userService) UpdateUser(isPartial bool,user users.User) (*users.User, *resError.RestError) {
+	current, err := s.GetUser(user.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -68,12 +82,12 @@ func UpdateUser(isPartial bool,user users.User) (*users.User, *resError.RestErro
 	return current, nil
 }
 
-func DeleteUser(userId int64) *resError.RestError {
+func(s *userService) DeleteUser(userId int64) *resError.RestError {
 	user := &users.User{Id: userId}
 	return user.Delete()
 }
 
-func Search(status string) (users.Users,*resError.RestError) {
+func(s *userService) Search(status string) (users.Users,*resError.RestError) {
 	dao := &users.User{}
 	users,err := dao.FindByStatus(status)
 	if err != nil {
