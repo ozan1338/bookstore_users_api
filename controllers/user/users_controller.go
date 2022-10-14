@@ -45,8 +45,8 @@ func CreateUser(c *gin.Context) {
 	//This function is same as we Readall and unmarshall the request
 	if err := c.ShouldBindJSON(&user); err != nil {
 		//TODO: handle json error
-		var resErr resError.RestError
-		resErr = *resError.NewBadRequestError("invalid json body")
+		// var resErr resError.RestError
+		resErr := *resError.NewBadRequestError("invalid json body")
 		c.JSON(http.StatusBadRequest, resErr)
 		return
 	}
@@ -89,8 +89,8 @@ func UpdateUser(c *gin.Context) {
 	//This function is same as we Readall and unmarshall the request
 	if err := c.ShouldBindJSON(&user); err != nil {
 		//TODO: handle json error
-		var resErr resError.RestError
-		resErr = *resError.NewBadRequestError("invalid json body")
+		// var resErr resError.RestError
+		resErr := *resError.NewBadRequestError("invalid json body")
 		c.JSON(http.StatusBadRequest, resErr)
 		return
 	}
@@ -122,4 +122,21 @@ func DeleteUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, map[string]string{"status":"deleted"})
+}
+
+func Login(c *gin.Context) {
+	var request users.LoginRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		respError := resError.NewInternalServerError("Invalid Json Body")
+		c.JSON(respError.Status, respError)
+		return
+	}
+
+	user,err := services.UserService.Login(request); 
+	if err != nil {
+		c.JSON(err.Status,err)
+		return
+	}
+
+	c.JSON(http.StatusOK, user.Marshall(c.GetHeader("X-Public") == "true"))
 }

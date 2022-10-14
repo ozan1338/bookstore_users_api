@@ -2,6 +2,7 @@ package users
 
 import (
 	"fmt"
+	"strings"
 	"users_api/datasource/myql/user_db"
 	"users_api/log"
 	resError "users_api/utils/errors"
@@ -17,11 +18,12 @@ const (
 	queryUpdateUser = "update user set first_name=?, last_name=?, email=? where id=?"
 	queryDeleteUser = "delete from user where id=?"
 	queryFindUserByStatus = "select id,first_name,last_name,email,date_created, status from user where status = ?;"
+	queryFindUserByEmailAndPassword = "select id, first_name, last_name, email, date_created, status from user where email = ? and password = ? and status = ?;"
 )
 
-var (
-	usersDB = make(map[int64]*User)
-)
+// var (
+// 	usersDB = make(map[int64]*User)
+// )
 
 func(user *User) Save() *resError.RestError {
 	stmt, err := user_db.Client.Prepare(queryInsertUser)
@@ -130,4 +132,24 @@ func (user *User) FindByStatus(status string) ([]User,*resError.RestError){
 	}
 
 	return results,nil
+}
+
+func(user *User) FindUserByEmailAndPassword() *resError.RestError {
+	stmt, err := user_db.Client.Prepare(queryFindUserByEmailAndPassword)
+	if err != nil {
+		log.Error("error when trying to prepare get user y email and statement ", err)
+		return resError.NewInternalServerError("database error")
+	}
+	defer stmt.Close()
+
+	result := stmt.QueryRow(user.Email, user.Password, user.Status)
+	if getErr := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated,  &user.Status); getErr != nil {
+		if (strings.Contains(getErr.Error(), errNoRows)){
+			return resError.NewNotFoundError("invalid login credential")
+		}
+		log.Error("error when trying to execute get user by email and password ", getErr)
+		return resError.NewInternalServerError("database error")
+	}
+
+	return nil
 }

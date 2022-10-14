@@ -14,4 +14,5 @@ func MapUrls() {
 	router.PUT("/users/:user_id", user.UpdateUser)
 	router.PATCH("/users/:user_id", user.UpdateUser)
 	router.DELETE("/users/:user_id", user.DeleteUser)
+	router.POST("/users/login", user.Login)
 }

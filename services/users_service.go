@@ -19,6 +19,7 @@ type userServiceInterface interface {
 	UpdateUser( bool, users.User) (*users.User, *resError.RestError)
 	DeleteUser( int64) *resError.RestError
 	Search( string) (users.Users,*resError.RestError)
+	Login(users.LoginRequest) (*users.User, *resError.RestError)
 }
 
 func(s *userService) CreateUser(user users.User) (*users.User, *resError.RestError) {
@@ -95,4 +96,16 @@ func(s *userService) Search(status string) (users.Users,*resError.RestError) {
 	}
 
 	return users,nil
+}
+
+func(s *userService) Login(request users.LoginRequest) (*users.User, *resError.RestError) {
+	dao := &users.User{
+		Email: request.Email,
+		Password: crypto_utils.GetMd5(request.Password),
+		Status: users.StatusActive,
+	}
+	if err := dao.FindUserByEmailAndPassword(); err != nil {
+		return nil, err
+	}
+	return dao,nil
 }
