@@ -6,6 +6,7 @@ import (
 	"users_api/domain/users"
 	"users_api/services"
 
+	oauth "users_api/api/oauth"
 	resError "users_api/utils/errors"
 
 	"github.com/gin-gonic/gin"
@@ -22,6 +23,11 @@ func getUserId(userIdParam string) (int64, *resError.RestError) {
 }
 
 func GetUser(c *gin.Context) {
+	if err := oauth.AuthenticateRequest(c.Request); err != nil {
+		c.JSON(err.Status,err)
+		return
+	}
+
 	userId, err := strconv.ParseInt(c.Param("user_id"), 10, 64)
 
 	if err != nil {
@@ -36,7 +42,12 @@ func GetUser(c *gin.Context) {
 		return 
 	}
 
-	c.JSON(http.StatusOK, user.Marshall(c.GetHeader("X-Public") == "true"))
+	if oauth.GetUserId(c.Request) == user.Id {
+		c.JSON(http.StatusOK, user.Marshall(false))
+		return
+	}
+
+	c.JSON(http.StatusOK, user.Marshall(oauth.IsPublic(c.Request)))
 }
 
 func CreateUser(c *gin.Context) {
