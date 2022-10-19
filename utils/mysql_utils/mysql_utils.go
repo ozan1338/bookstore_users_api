@@ -12,7 +12,7 @@ const (
 	errNoRows = "no rows in result set"
 )
 
-func ParseErr(err error) *resError.RestError {
+func ParseErr(err error) resError.RestError {
 	sqlErr, ok := err.(*mysql.MySQLError)
 
 	if !ok {

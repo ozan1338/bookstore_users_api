@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func getUserId(userIdParam string) (int64, *resError.RestError) {
+func getUserId(userIdParam string) (int64, resError.RestError) {
 	userId, userErr := strconv.ParseInt(userIdParam, 10, 64)
 
 	if userErr != nil {
@@ -24,7 +24,7 @@ func getUserId(userIdParam string) (int64, *resError.RestError) {
 
 func GetUser(c *gin.Context) {
 	if err := oauth.AuthenticateRequest(c.Request); err != nil {
-		c.JSON(err.Status,err)
+		c.JSON(err.GetStatus(),err)
 		return
 	}
 
@@ -32,13 +32,13 @@ func GetUser(c *gin.Context) {
 
 	if err != nil {
 		resErr := resError.NewBadRequestError("user id should be a number")
-		c.JSON(resErr.Status, resErr)
+		c.JSON(resErr.GetStatus(), resErr)
 		return
 	}
 
 	user, getErr := services.UserService.GetUser(userId)
 	if getErr != nil {
-		c.JSON(getErr.Status, getErr)
+		c.JSON(getErr.GetStatus(), getErr)
 		return 
 	}
 
@@ -57,7 +57,7 @@ func CreateUser(c *gin.Context) {
 	if err := c.ShouldBindJSON(&user); err != nil {
 		//TODO: handle json error
 		// var resErr resError.RestError
-		resErr := *resError.NewBadRequestError("invalid json body")
+		resErr := resError.NewBadRequestError("invalid json body")
 		c.JSON(http.StatusBadRequest, resErr)
 		return
 	}
@@ -65,7 +65,7 @@ func CreateUser(c *gin.Context) {
 	result, err := services.UserService.CreateUser(user)
 	if err != nil {
 		//TODO: handle error
-		c.JSON(err.Status, err)
+		c.JSON(err.GetStatus(), err)
 		return
 	}
 
@@ -77,7 +77,7 @@ func SearchUser(c *gin.Context) {
 
 	users, err := services.UserService.Search(status)
 	if err != nil {
-		c.JSON(err.Status, err)
+		c.JSON(err.GetStatus(), err)
 		return
 	}
 
@@ -91,7 +91,7 @@ func UpdateUser(c *gin.Context) {
 
 	if userErr != nil {
 		resErr := resError.NewBadRequestError("user id should be a number")
-		c.JSON(resErr.Status, resErr)
+		c.JSON(resErr.GetStatus(), resErr)
 		return
 	}
 
@@ -101,7 +101,7 @@ func UpdateUser(c *gin.Context) {
 	if err := c.ShouldBindJSON(&user); err != nil {
 		//TODO: handle json error
 		// var resErr resError.RestError
-		resErr := *resError.NewBadRequestError("invalid json body")
+		resErr := resError.NewBadRequestError("invalid json body")
 		c.JSON(http.StatusBadRequest, resErr)
 		return
 	}
@@ -113,7 +113,7 @@ func UpdateUser(c *gin.Context) {
 	result, err := services.UserService.UpdateUser(isPartial,user)
 
 	if err != nil {
-		c.JSON(err.Status, err)
+		c.JSON(err.GetStatus(), err)
 		return
 	}
 
@@ -123,12 +123,12 @@ func UpdateUser(c *gin.Context) {
 func DeleteUser(c *gin.Context) {
 	userId, idErr := getUserId(c.Param("user_id"))
 	if idErr != nil {
-		c.JSON(idErr.Status, idErr)
+		c.JSON(idErr.GetStatus(), idErr)
 		return
 	}
 
 	if err := services.UserService.DeleteUser(userId); err != nil {
-		c.JSON(err.Status, err)
+		c.JSON(err.GetStatus(), err)
 		return
 	}
 
@@ -139,13 +139,13 @@ func Login(c *gin.Context) {
 	var request users.LoginRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		respError := resError.NewInternalServerError("Invalid Json Body")
-		c.JSON(respError.Status, respError)
+		c.JSON(respError.GetStatus(), respError)
 		return
 	}
 
 	user,err := services.UserService.Login(request); 
 	if err != nil {
-		c.JSON(err.Status,err)
+		c.JSON(err.GetStatus(),err)
 		return
 	}
 
