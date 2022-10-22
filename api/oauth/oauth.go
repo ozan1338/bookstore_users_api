@@ -117,10 +117,11 @@ func getAccessToken(accessTokenId string) (*accessToken, resError.RestError) {
 	}
 
 	if response.StatusCode > 399 {
-		// fmt.Println("HERERERE")
-		var respError resError.RestError
-		if err := json.Unmarshal(response.Bytes(), &respError); err != nil {
-			return nil, resError.NewInternalServerError("invalid err interface when trying to get access token")
+		respError,err := resError.NewRestErrorFromBytes(response.Bytes())
+		// var respError resError.RestError
+		
+		if err != nil {
+			return nil, resError.NewInternalServerError("invalid error interface when trying to get access token")
 		}
 		return nil ,respError
 	}
