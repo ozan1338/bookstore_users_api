@@ -72,7 +72,7 @@ func AuthenticateRequest(request *http.Request) resError.RestError {
 		return nil
 	}
 
-	fmt.Println("THIS IT")
+	// fmt.Println("THIS IT")
 
 	cleanRequest(request)
 
